@@ -28,7 +28,10 @@ async def on_message(message):
     try:
         response = requests.post(
             RAG_API_URL,
-            json={"question": user_input},
+            json={
+                "question": user_input,
+                "user_id": str(message.author.id)
+            },
             timeout=20
         )
         data = response.json()
