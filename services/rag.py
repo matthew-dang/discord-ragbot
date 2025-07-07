@@ -69,12 +69,13 @@ def generate_answer(question: str, chunks: list[str]):
     prompt = f"Use this context to answer:\n{context}\n\nQuestion: {question}"
 
     payload = {
+        "model": "deepseek-r1",
         "messages": [
             {"role": "system", "content": "You are a helpful assistant for AI Bootcamp interns."},
             {"role": "user", "content": prompt}
         ],
         "temperature": 0.7,
-        "max_tokens": 512
+        "max_tokens": 1024
     }
 
     headers = {
@@ -85,8 +86,9 @@ def generate_answer(question: str, chunks: list[str]):
     try:
         response = requests.post(DEEPSEEK_API_URL, json=payload, headers=headers, timeout=60)
         response.raise_for_status()
+        full_text = response.json()["choices"][0]["message"]["content"]
         logging.info("Successfully received response from LLM.")
-        return response.json()["choices"][0]["message"]["content"]
+        return extract_answer(full_text)
     except Exception as e:
         logging.error(f"[DeepSeek Error]: {str(e)}")
         return f"[DeepSeek Error]: {str(e)}"
@@ -104,3 +106,5 @@ def run_rag_pipeline(question: str):
     answer = generate_answer(question, top_chunks)
     logging.info("RAG pipeline completed successfully.")
     return answer, top_chunks
+
+
