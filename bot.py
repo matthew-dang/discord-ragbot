@@ -19,24 +19,29 @@ async def on_ready():
 
 @client.event
 async def on_message(message):
-    # Ignore bot messages
     if message.author.bot:
         return
 
     user_input = message.content.strip()
 
     try:
+        loading_msg = await message.channel.send("Thinking...")
+
         response = requests.post(
             RAG_API_URL,
-            json={
-                "question": user_input,
-                "user_id": str(message.author.id)
-            },
-            timeout=20
+            json={"question": user_input, "user_id": str(message.author.id)},
+            timeout=60
         )
         data = response.json()
         answer = data.get("answer", "[Error]: No answer returned.")
-        await message.channel.send(answer)
+        cleaned_answer = answer.replace('---', '').strip()
+
+        await loading_msg.delete()
+
+        # Send in 2000 character chunks
+        MAX_LENGTH = 2000
+        for i in range(0, len(cleaned_answer), MAX_LENGTH):
+            await message.channel.send(cleaned_answer[i:i+MAX_LENGTH])
 
     except Exception as e:
         print(f"Error: {str(e)}")
